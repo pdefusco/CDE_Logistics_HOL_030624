@@ -71,7 +71,7 @@ def createSparkSession():
     try:
         spark = SparkSession \
             .builder \
-            .appName("BANK TRANSACTIONS LOAD") \
+            .appName("LOGISTICS IOT FLEET LOAD") \
             .getOrCreate()
     except Exception as e:
         print("LAUNCHING SPARK SESSION UNSUCCESSFUL")
@@ -82,152 +82,153 @@ def createSparkSession():
     return spark
 
 
-def createTransactionData(spark):
+def createFirstBatchData(spark):
     """
-    Method to create a Banking Transactions dataframe using the dbldatagen and Faker frameworks
+    Method to create first logistics batch dataframe using the dbldatagen and Faker frameworks
     """
 
     try:
-        print("CREATING BANKING TRANSACTIONS DF...\n")
-        dg = BankDataGen(spark)
-        transactionsDf = dg.transactionsDataGen()
+        print("CREATING IOT FLEET FIRST BATCH DF...\n")
+        dg = IotDataGen(spark)
+        firstBatchDf = dg.firstBatchDataGen()
     except Exception as e:
-        print("CREATING TRANSACTION DATA UNSUCCESSFUL")
+        print("CREATING FIRST BATCH UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
-    return transactionsDf
+    return firstBatchDf
 
 
-def createTransactionBatch(spark):
+def createSecondBatchData(spark):
     """
-    Method to create a Banking Transactions dataframe using the dbldatagen and Faker frameworks
+    Method to create second logistics batch dataframe using the dbldatagen and Faker frameworks
     """
 
     try:
-        print("CREATING BANKING TRANSACTIONS 1 DF BATCH...\n")
-        dg = BankDataGen(spark)
-        transactionsBatchDf = dg.transactionsBatchDataGen()
+        print("CREATING IOT FLEET SECOND BATCH DF...\n")
+        dg = IotDataGen(spark)
+        secondBatchDf = dg.secondBatchDataGen()
     except Exception as e:
-        print("CREATING TRANSACTION DATA 1 UNSUCCESSFUL")
+        print("CREATING SECOND BATCH UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
-    return transactionsBatchDf
+    return secondBatchDf
 
-def createSecondTransactionBatch(spark):
+
+def createThirdBatchData(spark):
     """
-    Method to create a Banking Transactions dataframe using the dbldatagen and Faker frameworks
+    Method to create third logistics batch dataframe using the dbldatagen and Faker frameworks
     """
 
     try:
-        print("CREATING BANKING TRANSACTIONS 2 BATCH DF...\n")
-        dg = BankDataGen(spark)
-        secondTransactionsBatchDf = dg.secondTransactionsBatchDataGen()
+        print("CREATING IOT FLEET THIRD BATCH DF...\n")
+        dg = IotDataGen(spark)
+        thirdBatchDf = dg.secondTransactionsBatchDataGen()
     except Exception as e:
         print("CREATING TRANSACTION DATA 2 UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
-    return secondTransactionsBatchDf
+    return thirdBatchDf
 
 
-def createPiiData(spark):
+def createCompanyData(spark):
     """
-    Method to create a Banking Pii dataframe using the dbldatagen and Faker frameworks
+    Method to create a trucking company dataframe using the dbldatagen and Faker frameworks
     """
 
     try:
-        print("CREATING BANKING PII DF...\n")
-        dg = BankDataGen(spark)
-        piiDf = dg.piiDataGen()
+        print("CREATING TRUCK COMPANY DF...\n")
+        dg = IotDataGen(spark)
+        companyDf = dg.companyDataGen()
     except Exception as e:
-        print("CREATING PII DATA UNSUCCESSFUL")
+        print("CREATING TRUCK COMPANY DATA UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
-    return piiDf
+    return companyDf
 
 
-def saveTransactionData(bankTransactionsDf, storageLocation, username):
+def saveFirstBatchData(firstBatchDf, storageLocation, username):
     """
-    Method to save banking transactions to Cloud Storage in Json format
+    Method to save first batch data to Cloud Storage in Json format
     """
 
-    print("SAVING BANKING TRANSACTIONS TO JSON IN CLOUD STORAGE...\n")
+    print("SAVING FIRST BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
         bankTransactionsDf. \
             write. \
             format("json"). \
             mode("overwrite"). \
-            save("{0}/mkthol/trans/{1}/transactions".format(storageLocation, username))
+            save("{0}/logistics/firstbatch/{1}/iotfleet".format(storageLocation, username))
     except Exception as e:
-        print("SAVING SYNTHETIC TRANSACTION DATA UNSUCCESSFUL")
+        print("SAVING FIRST BATCH DATA UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
 
-def saveTransactionBatch(transactionsBatchDf, storageLocation, username):
+def saveSecondBatchData(secondBatchDf, storageLocation, username):
     """
-    Method to save banking transactions to Cloud Storage in Json format
+    Method to save second batch data to Cloud Storage in Json format
     """
 
-    print("SAVING TRANSACTIONS BATCH 1 TO JSON IN CLOUD STORAGE...\n")
+    print("SAVING SECOND BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
         transactionsBatchDf. \
             write. \
             format("json"). \
             mode("overwrite"). \
-            save("{0}/mkthol/trans/{1}/trx_batch_1".format(storageLocation, username))
+            save("{0}/logistics/secondbatch/{1}/iotfleet".format(storageLocation, username))
     except Exception as e:
-        print("SAVING TRANSACTION BATCH 1 UNSUCCESSFUL")
+        print("SAVING SECOND BATCH DATA UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
 
-def saveSecondTransactionBatch(secondTransactionsBatchDf, storageLocation, username):
+def saveThirdBatchData(thirdBatchDf, storageLocation, username):
     """
-    Method to save banking transactions to Cloud Storage in Json format
+    Method to save third batch data to Cloud Storage in Json format
     """
 
-    print("SAVING TRANSACTIONS BATCH 2 TO JSON IN CLOUD STORAGE...\n")
+    print("SAVING THIRD BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
         secondTransactionsBatchDf. \
             write. \
             format("json"). \
             mode("overwrite"). \
-            save("{0}/mkthol/trans/{1}/trx_batch_2".format(storageLocation, username))
+            save("{0}/logistics/thirdbatch/{1}/iotfleet".format(storageLocation, username))
     except Exception as e:
-        print("SAVING TRANSACTION BATCH 2 UNSUCCESSFUL")
+        print("SAVING THIRD BATCH DATA UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
 
 
-def savePiiData(piiDf, storageLocation, username):
+def saveCompanyData(companyDf, storageLocation, username):
     """
-    Method to save banking transactions to Cloud Storage in csv format
+    Method to save company information to Cloud Storage in csv format
     """
 
-    print("SAVING PII DF TO CSV IN CLOUD STORAGE...\n")
+    print("SAVING COMPANY DF TO CSV IN CLOUD STORAGE...\n")
 
     try:
-        piiDf \
+        companyDf \
             .write. \
             mode('overwrite') \
             .options(header='True', delimiter=',') \
-            .csv("{0}/mkthol/pii/{1}/pii".format(storageLocation, username))
+            .csv("{0}/logistics/company/{1}/company_info".format(storageLocation, username))
     except Exception as e:
-        print("SAVING SYNTHETIC TRANSACTION DATA UNSUCCESSFUL")
+        print("SAVING COMPANY INFO UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
@@ -249,17 +250,17 @@ def main():
 
         print("PROCESSING USER {}...\n".format(username))
 
-        bankTransactionsDf = createTransactionData(spark)
-        saveTransactionData(bankTransactionsDf, storageLocation, username)
+        firstBatchDf = createFirstBatchData(spark)
+        saveFirstBatchData(firstBatchDf, storageLocation, username)
 
-        piiDf = createPiiData(spark)
-        savePiiData(piiDf, storageLocation, username)
+        secondBatchDf = createSecondBatchData(spark)
+        saveSecondBatchData(secondBatchDf, storageLocation, username)
 
-        transactionsBatchDf = createTransactionBatch(spark)
-        saveTransactionBatch(transactionsBatchDf, storageLocation, username)
+        thirdBatchDf = createThirdBatchData(spark)
+        saveThirdBatchData(thirdBatchDf, storageLocation, username)
 
-        secondTransactionsBatchDf = createSecondTransactionBatch(spark)
-        saveSecondTransactionBatch(secondTransactionsBatchDf, storageLocation, username)
+        companyDf = createCompanyData(spark)
+        saveCompanyData(companyDf, storageLocation, username)
 
 
 if __name__ == "__main__":

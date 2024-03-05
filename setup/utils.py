@@ -40,25 +40,120 @@
 import os
 import numpy as np
 import pandas as pd
+from pyspark.sql.functions import lit
 from datetime import datetime
 import dbldatagen as dg
 import dbldatagen.distributions as dist
 from dbldatagen import FakerTextFactory, DataGenerator, fakerText
-from faker.providers import bank, credit_card, currency
+from faker.providers import bank, credit_card, company
 from pyspark.sql.types import LongType, FloatType, IntegerType, StringType, \
                               DoubleType, BooleanType, ShortType, \
                               TimestampType, DateType, DecimalType, \
                               ByteType, BinaryType, ArrayType, MapType, \
                               StructType, StructField
 
-class BankDataGen:
+class IotDataGen:
 
-    '''Class to Generate Banking Data'''
+    '''Class to Generate IoT Fleet Data'''
 
     def __init__(self, spark):
         self.spark = spark
 
-    def transactionsDataGen(self, shuffle_partitions_requested = 5, partitions_requested = 5, data_rows = 2000):
+
+    def firstBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 2, partitions_requested = 5, data_rows = 14400):
+        """
+        Method to create credit card transactions in Spark Df
+        """
+
+        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+
+        iotDataSpec = (
+            dg.DataGenerator(self.spark, name="device_data_set", rows=data_rows, partitions=partitions_requested)
+            .withIdOutput()
+            .withColumn("internal_device_id", "long", minValue=0x1000000000000, uniqueValues=int(data_rows/1440), omit=True, baseColumnType="hash", randomSeed=4)
+            .withColumn("device_id", "string", format="0x%013x", baseColumn="internal_device_id")
+            .withColumn("manufacturer", "string", values=manufacturers, baseColumn="internal_device_id", )
+            .withColumn("model_ser", "integer", minValue=1, maxValue=11, baseColumn="device_id", baseColumnType="hash", omit=True, )
+            .withColumn("event_type", "string", values=["tank below 10%", "tank below 5%", "device error", "system malfunction"], random=True)
+            .withColumn("event_ts", "timestamp", begin="2023-12-01 01:00:00", end="2023-12-01 23:59:00", interval="1 minute", random=False )
+            .withColumn("longitude", "float", minValue=minLongitude, maxValue=maxLongitude, random=True )
+            .withColumn("latitude", "float", minValue=minLatitude, maxValue=maxLatitude, random=True )
+            .withColumn("iot_signal_1", "integer", minValue=1, maxValue=10, random=True)
+            .withColumn("iot_signal_2", "integer", minValue=1000, maxValue=1020, random=True)
+            .withColumn("iot_signal_3", "integer", minValue=50, maxValue=55, random=True)
+            .withColumn("iot_signal_4", "integer", minValue=100, maxValue=107, random=True)
+            .withColumn("transaction_geolocation", StructType([StructField('latitude',StringType()), StructField('longitude', StringType())]),
+              expr="named_struct('latitude', latitude, 'longitude', longitude)",
+              baseColumn=['latitude', 'longitude'])
+        )
+
+        df = iotDataSpec.build()
+
+        df = df.drop(*('latitude', 'longitude'))
+
+        return df
+
+
+    def secondBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 1000):
+        """
+        Method to create credit card transactions in Spark Df
+        """
+
+        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+
+        iotDataSpec = (
+            dg.DataGenerator(self.spark, name="device_data_set", rows=data_rows, partitions=partitions_requested)
+            .withIdOutput()
+            .withColumn("internal_device_id", "long", minValue=0x1000000000000, uniqueValues=int(data_rows), omit=True, baseColumnType="hash")
+            .withColumn("device_id", "string", format="0x%013x", baseColumn="internal_device_id")
+            .withColumn("manufacturer", "string", values=manufacturers, baseColumn="internal_device_id", )
+            .withColumn("model_ser", "integer", minValue=1, maxValue=11, baseColumn="device_id", baseColumnType="hash", omit=True, )
+            .withColumn("event_type", "string", values=["tank below 10%", "tank below 5%", "device error", "system malfunction"], random=True)
+            .withColumn("event_ts", "timestamp", begin="2023-12-01 01:00:00", end="2023-12-02 23:59:00", interval="1 minute", random=True )
+            .withColumn("longitude", "float", minValue=minLongitude, maxValue=maxLongitude, random=True )
+            .withColumn("latitude", "float", minValue=minLatitude, maxValue=maxLatitude, random=True )
+            .withColumn("iot_signal_1", "integer", minValue=1, maxValue=10, random=True)
+            .withColumn("iot_signal_2", "integer", minValue=1000, maxValue=1020, random=True)
+            .withColumn("iot_signal_3", "integer", minValue=50, maxValue=55, random=True)
+            .withColumn("iot_signal_4", "integer", minValue=100, maxValue=107, random=True)
+        )
+
+        df = iotDataSpec.build()
+
+        return df
+
+
+    def thirdBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 1000):
+        """
+        Method to create credit card transactions in Spark Df
+        """
+
+        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+
+        iotDataSpec = (
+            dg.DataGenerator(self.spark, name="device_data_set", rows=data_rows, partitions=partitions_requested)
+            .withIdOutput()
+            .withColumn("internal_device_id", "long", minValue=0x1000000000000, uniqueValues=int(data_rows), omit=True, baseColumnType="hash")
+            .withColumn("device_id", "string", format="0x%013x", baseColumn="internal_device_id")
+            .withColumn("manufacturer", "string", values=manufacturers, baseColumn="internal_device_id", )
+            .withColumn("model_ser", "integer", minValue=1, maxValue=11, baseColumn="device_id", baseColumnType="hash", omit=True, )
+            .withColumn("event_type", "string", values=["tank below 10%", "tank below 5%", "device error", "system malfunction"], random=True)
+            .withColumn("event_ts", "timestamp", begin="2023-12-03 01:00:00", end="2023-12-03 23:59:00", interval="1 minute", random=True )
+            .withColumn("longitude", "float", minValue=minLongitude, maxValue=maxLongitude, random=True )
+            .withColumn("latitude", "float", minValue=minLatitude, maxValue=maxLatitude, random=True )
+            .withColumn("iot_signal_1", "integer", minValue=1, maxValue=10, random=True)
+            .withColumn("iot_signal_2", "integer", minValue=1000, maxValue=1020, random=True)
+            .withColumn("iot_signal_3", "integer", minValue=50, maxValue=55, random=True)
+            .withColumn("iot_signal_4", "integer", minValue=100, maxValue=107, random=True)
+        )
+
+        df = iotDataSpec.build()
+
+        return df
+
+    def companyDataGen(self, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 3):
+
+        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
 
         # setup use of Faker
         FakerTextUS = FakerTextFactory(locale=['en_US'], providers=[bank])
@@ -67,105 +162,60 @@ class BankDataGen:
         self.spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
         fakerDataspec = (DataGenerator(self.spark, rows=data_rows, partitions=partitions_requested)
-                    .withColumn("credit_card_number", "long", minValue=3674567891195999, maxValue=3674567891197999, uniqueValues=1000, random=True, randomSeed=4)
-                    .withColumn("credit_card_provider", text=FakerTextUS("credit_card_provider") )
-                    .withColumn("transaction_type", "string", values=["purchase", "cash_advance"], random=True, weights=[9, 1])
-                    .withColumn("event_ts", "timestamp", begin="2023-01-01 01:00:00",end="2023-12-31 23:59:00",interval="1 minute", random=True)
-                    .withColumn("longitude", "float", minValue=-125, maxValue=-66.9345, random=True)
-                    .withColumn("latitude", "float", minValue=24.3963, maxValue=49.3843, random=True)
-                    .withColumn("transaction_currency", values=["USD", "EUR", "KWD", "BHD", "GBP", "CHF", "MEX"])
-                    .withColumn("transaction_amount", "decimal", minValue=0.01, maxValue=30000, random=True)
-                    .withColumn("transaction", StructType([StructField('transaction_currency', StringType()), StructField('transaction_amount', StringType()), StructField('transaction_type', StringType())]),
-                    expr="named_struct('transaction_currency', transaction_currency, 'transaction_amount', transaction_amount, 'transaction_type', transaction_type)",
-                    baseColumn=['transaction_currency', 'transaction_currency', 'transaction_type'])
-                    .withColumn("transaction_geolocation", StructType([StructField('latitude',StringType()), StructField('longitude', StringType())]),
-                      expr="named_struct('latitude', latitude, 'longitude', longitude)",
-                      baseColumn=['latitude', 'longitude'])
+                    .withColumn("manufacturer", "string", values=manufacturers, random=False, randomSeed=4)
+                    .withColumn("company_name", text=FakerTextUS("company"), randomSeed=4)
+                    .withColumn("company_email", text=FakerTextUS("ascii_company_email"), randomSeed=4)
                     )
 
         df = fakerDataspec.build()
-
-        df = df.drop(*('latitude', 'longitude', 'transaction_currency', 'transaction_amount', 'transaction_type'))
-
-        df = df.withColumn("credit_card_number", df["credit_card_number"].cast("string"))
-
-        return df
-
-    def transactionsBatchDataGen(self, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 100):
-
-        # setup use of Faker
-        FakerTextUS = FakerTextFactory(locale=['en_US'], providers=[bank])
-
-        # partition parameters etc.
-        self.spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
-
-        fakerDataspec = (DataGenerator(self.spark, rows=data_rows, partitions=partitions_requested)
-                    .withColumn("credit_card_number", "long", minValue=3174567891123457, maxValue=3174567891199999, uniqueValues=100, random=True) #text=FakerTextUS("credit_card_number")
-                    .withColumn("credit_card_provider", text=FakerTextUS("credit_card_provider"))
-                    .withColumn("transaction_type", "string", values=["purchase", "cash_advance"], random=True, weights=[9, 1])
-                    .withColumn("event_ts", "timestamp", begin="2023-01-01 01:00:00",end="2023-12-31 23:59:00",interval="1 minute", random=True)
-                    .withColumn("longitude", "float", minValue=-125, maxValue=-66.9345, random=True)
-                    .withColumn("latitude", "float", minValue=24.3963, maxValue=49.3843, random=True)
-                    .withColumn("transaction_currency", values=["USD", "EUR", "KWD", "BHD", "GBP", "CHF", "MEX"])
-                    .withColumn("transaction_amount", "decimal", minValue=0.01, maxValue=30000, random=True)
-                    )
-
-        df = fakerDataspec.build()
-        df = df.withColumn("credit_card_number", df["credit_card_number"].cast("string"))
-        df = df.dropDuplicates(['credit_card_number', 'credit_card_provider'])
+        df = df.withColumn('facility_latitude', lit(41.5868))
+        df = df.withColumn('facility_longitude', lit(93.6250))
 
         return df
 
 
-    def secondTransactionsBatchDataGen(self, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 150):
+    def createDatabase(self):
+        """
+        Method to create database before data generated is saved to new database and table
+        """
 
-        # setup use of Faker
-        FakerTextUS = FakerTextFactory(locale=['en_US'], providers=[bank])
+        self.spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(self.dbname))
 
-        # partition parameters etc.
-        self.spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
-
-        fakerDataspec = (DataGenerator(self.spark, rows=data_rows, partitions=partitions_requested)
-                    .withColumn("credit_card_number", "long", minValue=3674567891195999, maxValue=3674567891197999, uniqueValues=data_rows, random=True, randomSeed=4) #text=FakerTextUS("credit_card_number")
-                    .withColumn("credit_card_provider", text=FakerTextUS("credit_card_provider"))
-                    .withColumn("transaction_type", "string", values=["purchase", "cash_advance"], random=True, weights=[9, 1])
-                    .withColumn("event_ts", "timestamp", begin="2023-01-01 01:00:00",end="2023-12-31 23:59:00",interval="1 minute", random=True)
-                    .withColumn("longitude", "float", minValue=-125, maxValue=-66.9345, random=True)
-                    .withColumn("latitude", "float", minValue=24.3963, maxValue=49.3843, random=True)
-                    .withColumn("transaction_currency", values=["USD", "EUR", "KWD", "BHD", "GBP", "CHF", "MEX"])
-                    .withColumn("transaction_amount", "decimal", minValue=0.01, maxValue=30000, random=True)
-                    )
-
-        df = fakerDataspec.build()
-        df = df.withColumn("credit_card_number", df["credit_card_number"].cast("string"))
-        df = df.dropDuplicates(['credit_card_number', 'credit_card_provider'])
-
-        return df
+        print("SHOW DATABASES LIKE '{}'".format(self.dbname))
+        self.spark.sql("SHOW DATABASES LIKE '{}'".format(self.dbname)).show()
 
 
-    def piiDataGen(self, shuffle_partitions_requested = 5, partitions_requested = 5, data_rows = 2000):
+    def dropDatabase(self):
+        """
+        Method to drop database used by previous demo run
+        """
 
-        # setup use of Faker
-        FakerTextUS = FakerTextFactory(locale=['en_US'], providers=[bank])
+        print("SHOW DATABASES PRE DROP")
+        self.spark.sql("SHOW DATABASES").show()
+        self.spark.sql("DROP DATABASE IF EXISTS {} CASCADE;".format(self.dbname))
+        print("\nSHOW DATABASES AFTER DROP")
+        self.spark.sql("SHOW DATABASES").show()
 
-        # partition parameters etc.
-        self.spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
 
-        fakerDataspec = (DataGenerator(self.spark, rows=data_rows, partitions=partitions_requested)
-                    .withColumn("name", text=FakerTextUS("name") )
-                    .withColumn("address", text=FakerTextUS("address" ))
-                    .withColumn("address_longitude", "float", minValue=-125, maxValue=-66.9345, random=True)
-                    .withColumn("address_latitude", "float", minValue=24.3963, maxValue=49.3843, random=True)
-                    .withColumn("email", text=FakerTextUS("ascii_company_email") )
-                    .withColumn("aba_routing", text=FakerTextUS("aba" ))
-                    .withColumn("bank_country", text=FakerTextUS("bank_country") )
-                    .withColumn("account_no", text=FakerTextUS("bban" ))
-                    .withColumn("int_account_no", text=FakerTextUS("iban") )
-                    .withColumn("swift11", text=FakerTextUS("swift11" ))
-                    .withColumn("credit_card_number", "long", minValue=3674567891195999, maxValue=3674567891197999, uniqueValues=1000, random=True, randomSeed=4)
-                    )
+    def createOrReplace(self, df):
+        """
+        Method to create or append data to the IOT DEVICES FLEET table
+        The table is used to simulate batches of new data
+        The table is meant to be updated periodically as part of a CML Job
+        """
 
-        df = fakerDataspec.build()
-        df = df.withColumn("credit_card_number", df["credit_card_number"].cast("string"))
+        try:
+            df.writeTo("{0}.IOT_FLEET_{1}".format(self.dbname, self.username))\
+              .using("iceberg").tableProperty("write.format.default", "parquet").append()
 
-        return df
+        except:
+            df.writeTo("{0}.IOT_FLEET_{1}".format(self.dbname, self.username))\
+                .using("iceberg").tableProperty("write.format.default", "parquet").createOrReplace()
+
+
+    def validateTable(self):
+        """
+        Method to validate creation of table
+        """
+        print("SHOW TABLES FROM '{}'".format(self.dbname))
+        self.spark.sql("SHOW TABLES FROM {}".format(self.dbname)).show()
