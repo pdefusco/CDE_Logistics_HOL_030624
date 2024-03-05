@@ -143,8 +143,8 @@ distanceDf = joinDf.withColumn("device_dist_from_facility", distanceFunc(F.array
 ```
 
 ```
-### SELECT FLEET MALFUNCTIONS OCCURRING LESS THAN 2 MILES FROM FACILITY
-distanceDf.filter((distanceDf.device_dist_from_facility < 2) & (distanceDf.event_type == "system malfunction")).show()
+### SELECT FLEET MALFUNCTIONS OCCURRING LESS THAN 200 MILES FROM FACILITY
+distanceDf.filter((distanceDf.device_dist_from_facility < 200) & (distanceDf.event_type == "system malfunction")).show()
 ```
 
 
