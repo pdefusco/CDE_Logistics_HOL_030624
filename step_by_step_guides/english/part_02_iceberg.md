@@ -24,7 +24,7 @@ Launch a new CDE Session or reuse the Session you created in Part 1 if it is sti
 ```
 from pyspark.sql.types import Row, StructField, StructType, StringType, IntegerType
 
-storageLocation = "s3a://cde-innovation-buk-9e384927/data"
+storageLocation = "s3a://go01-demo/data"
 username = "user002"
 ```
 
