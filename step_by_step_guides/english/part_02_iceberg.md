@@ -30,12 +30,12 @@ username = "user002"
 
 By default, a Spark table created in CDE is tracked in the Hive Metastore as an External table. Data is stored in Cloud Storage in one of many formats (parquet, csv, avro, etc.) and its location is tracked by the HMS.
 
-When adopting Iceberg for the first time, tables can be copied or migrated to Iceberg format. A copy implies the recompuation of the whole datasets into an Iceberg table while a Migration only involves the creation of Iceberg metadata in the Iceberg Metadata Layer.   
+When adopting Iceberg for the first time, tables can be copied or migrated to Iceberg format. A copy implies the recomputation of the whole datasets into an Iceberg table while a Migration only involves the creation of Iceberg metadata in the Iceberg Metadata Layer.   
 
 ```
-## Migrate Table to Iceberg Table Format
-spark.sql("ALTER TABLE {}.TRX_TABLE UNSET TBLPROPERTIES ('TRANSLATED_TO_EXTERNAL')".format(username))
-spark.sql("CALL spark_catalog.system.migrate('{}.TRX_TABLE')".format(username))
+## Migrate First Batch Table to Iceberg Table Format
+spark.sql("ALTER TABLE {}.FIRST_BATCH_TABLE UNSET TBLPROPERTIES ('TRANSLATED_TO_EXTERNAL')".format(username))
+spark.sql("CALL spark_catalog.system.migrate('{}.FIRST_BATCH_TABLE')".format(username))
 ```
 
 The Iceberg Metadata Layer provides three layers of metadata files whose purpose is to track Iceberg tables as they are modified. The Metadata layer consists of Metadata Files, Manifest Lists and Manifest Files.
@@ -57,46 +57,47 @@ print("PRE-INSERT TIMESTAMP: ", timestamp)
 
 ```
 # PRE-INSERT COUNT
-spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.TRX_TABLE".format(username)).show()
+spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).show()
 ```
 ```
-# LOAD NEW TRANSACTION BATCH
-trxBatchDf = spark.read.json("{0}/mkthol/trans/{1}/trx_batch_1".format(storageLocation, username))
-trxBatchDf = trxBatchDf.withColumn("event_ts", trxBatchDf["event_ts"].cast('timestamp'))
-trxBatchDf.printSchema()
-trxBatchDf.createOrReplaceTempView("BATCH_TEMP_VIEW".format(username))
+# LOAD SECOND TRANSACTION BATCH
+secondBatchDf = spark.read.json("{0}/logistics/secondbatch/{1}/iotfleet".format(storageLocation, username))
+secondBatchDf = trxBatchDf.withColumn("event_ts", secondBatchDf["event_ts"].cast('timestamp'))
+secondBatchDf.printSchema()
+secondBatchDf.createOrReplaceTempView("SECOND_BATCH_TEMP_VIEW".format(username))
 ```
 
 ```
-ICEBERG_MERGE_INTO_SYNTAX = """MERGE INTO spark_catalog.{}.TRX_TABLE t USING (SELECT * FROM BATCH_TEMP_VIEW) s
-   ON t.credit_card_number = s.credit_card_number WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *""".format(username)
+ICEBERG_MERGE_INTO_SYNTAX = """MERGE INTO spark_catalog.{}.FIRST_BATCH_TABLE f USING (SELECT * FROM SECOND_BATCH_TEMP_VIEW) s
+   ON f.device_id = s.device_id AND f.event_ts = s.event_ts WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *""".format(username)
 
 spark.sql(ICEBERG_MERGE_INTO_SYNTAX)
 ```
 
 ```
 ### ALTERNATIVE SYNTAX VIA ICEBERG DF API IF MERGE INTO IS JUST APPEND
-### trxBatchDf.writeTo("spark_catalog.{}.TRX_TABLE".format(username)).append()
+### DO NOT RUN - YOU WILL LEARN MORE IN PART 3
+### secondBatchDf.writeTo("spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).append()
 ```
 
 ```
 # POST-INSERT COUNT
-spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.TRX_TABLE".format(username)).show()
+spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).show()
 ```
 
 ```
 # QUERY ICEBERG METADATA HISTORY TABLE
-spark.sql("SELECT * FROM spark_catalog.{}.TRX_TABLE.history".format(username)).show(20, False)
+spark.sql("SELECT * FROM spark_catalog.{}.FIRST_BATCH_TABLE.history".format(username)).show(20, False)
 ```
 
 ```
 # QUERY ICEBERG METADATA HISTORY TABLE
-spark.sql("SELECT * FROM spark_catalog.{}.TRX_TABLE.snapshots".format(username)).show(20, False)
+spark.sql("SELECT * FROM spark_catalog.{}.FIRST_BATCH_TABLE.snapshots".format(username)).show(20, False)
 ```
 
 ```
 # TIME TRAVEL AS OF PREVIOUS TIMESTAMP
-df = spark.read.option("as-of-timestamp", int(timestamp*1000)).format("iceberg").load("spark_catalog.{}.TRX_TABLE".format(username))
+df = spark.read.option("as-of-timestamp", int(timestamp*1000)).format("iceberg").load("spark_catalog.{}.FIRST_BATCH_TABLE".format(username))
 
 # POST TIME TRAVEL COUNT
 print(df.count())

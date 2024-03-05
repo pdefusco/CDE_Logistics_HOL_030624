@@ -45,7 +45,7 @@ from utils import *
 
 spark = SparkSession \
     .builder \
-    .appName("DATA VALIDATION") \
+    .appName("MERGE BATCHES") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog")\
     .config("spark.sql.catalog.spark_catalog.type", "hive")\
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")\
@@ -63,12 +63,11 @@ print("PySpark Runtime Arg: ", sys.argv[1])
 #               LOAD TRX BATCH DATA
 #---------------------------------------------------
 
-trxBatchDf = spark.read.json("{0}/mkthol/trans/{1}/trx_batch_2".format(storageLocation, username))
+thirdBatchDf = spark.read.json("{0}/logistics/thirdbatch/{1}/iotfleet".format(storageLocation, username))
 
-trxBatchDf = trxBatchDf.withColumn("transaction_amount",  trxBatchDf["transaction_amount"].cast('float'))
-trxBatchDf = trxBatchDf.withColumn("latitude",  trxBatchDf["latitude"].cast('float'))
-trxBatchDf = trxBatchDf.withColumn("longitude",  trxBatchDf["longitude"].cast('float'))
-trxBatchDf = trxBatchDf.withColumn("event_ts", trxBatchDf["event_ts"].cast("timestamp"))
+thirdBatchDf = thirdBatchDf.withColumn("latitude",  thirdBatchDf["latitude"].cast('float'))
+thirdBatchDf = thirdBatchDf.withColumn("longitude",  thirdBatchDf["longitude"].cast('float'))
+thirdBatchDf = thirdBatchDf.withColumn("event_ts", thirdBatchDf["event_ts"].cast("timestamp"))
 
 #---------------------------------------------------
 #               MIGRATE TRX DATA TO ICEBERG
@@ -82,17 +81,17 @@ trxBatchDf = trxBatchDf.withColumn("event_ts", trxBatchDf["event_ts"].cast("time
 #               PARTITION TRX TABLE BY MONTH
 #---------------------------------------------------
 
-spark.sql("ALTER TABLE spark_catalog.{}.TRX_TABLE ADD PARTITION FIELD MONTHS(event_ts) AS MON".format(username))
+spark.sql("ALTER TABLE spark_catalog.{}.FIRST_BATCH_TABLE ADD PARTITION FIELD DAYS(event_ts) AS DAY".format(username))
 
 #---------------------------------------------------
 #               MERGE TRX RECORDS
 #---------------------------------------------------
 
 ### ALTERNATIVE SYNTAX VIA ICEBERG DF API IF MERGE INTO IS JUST APPEND
-trxBatchDf.writeTo("spark_catalog.{}.TRX_TABLE".format(username)).append()
+thirdBatchDf.writeTo("spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).append()
 
 #-----------------------------------------------------
 #               PARTITION EVOLUTION TRX TABLE BY DAY
 #-----------------------------------------------------
 
-spark.sql("ALTER TABLE spark_catalog.{}.TRX_TABLE REPLACE PARTITION FIELD MON WITH DAYS(event_ts) AS DY".format(username))
+spark.sql("ALTER TABLE spark_catalog.{}.FIRST_BATCH_TABLE REPLACE PARTITION FIELD DAY WITH HOURS(event_ts) AS HR".format(username))

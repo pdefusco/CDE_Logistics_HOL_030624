@@ -57,20 +57,24 @@ username = sys.argv[1]
 print("PySpark Runtime Arg: ", sys.argv[1])
 
 #---------------------------------------------------
-#               LOAD BATCH DATA
+#               LOAD THIRD BATCH DATA
 #---------------------------------------------------
 
-trxBatchDf = spark.read.json("{0}/mkthol/trans/{1}/trx_batch_2".format(storageLocation, username))
+thirdBatchDf = spark.read.json("{0}/logistics/thirdbatch/{1}/iotfleet".format(storageLocation, username))
 
 #---------------------------------------------------
 #               VALIDATE BATCH DATA
 #---------------------------------------------------
 
-# validate the data quality of the sales data with great-expectations
-geTrxBatchDf = SparkDFDataset(trxBatchDf)
+# validate geospatial coordinate data to exist:
 
-geTrxBatchDfValidation = geTrxBatchDf.expect_compound_columns_to_be_unique(["credit_card_number", "credit_card_provider"])
+geThirdBatchDf = SparkDFDataset(trxBatchDf)
 
-print(f"VALIDATION RESULTS FOR TRANSACTION BATCH DATA:\n{geTrxBatchDfValidation}\n")
-assert geTrxBatchDfValidation.success, \
-    "VALIDATION FOR SALES TABLE UNSUCCESSFUL: FOUND DUPLICATES IN [credit_card_number, credit_card_provider]."
+MANDATORY_COLUMNS = ["latitude", "longitude"]
+
+for column in MANDATORY_COLUMNS:
+    try:
+        assert geThirdBatchDf.expect_column_to_exist(column).success, f"Mandatory column {column} does not exist: FAILED"
+        print(f"Column {column} exists : PASSED")
+    except AssertionError as e:
+        print(e)

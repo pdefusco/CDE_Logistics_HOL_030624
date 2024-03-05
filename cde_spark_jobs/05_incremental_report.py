@@ -64,13 +64,13 @@ print("PySpark Runtime Arg: ", sys.argv[1])
 #---------------------------------------------------
 
 # ICEBERG TABLE HISTORY (SHOWS EACH SNAPSHOT AND TIMESTAMP)
-spark.sql("SELECT * FROM {}.TRX_TABLE.history;".format(username)).show()
+spark.sql("SELECT * FROM {}.FIRST_BATCH_TABLE.history;".format(username)).show()
 
 # ICEBERG TABLE SNAPSHOTS (USEFUL FOR INCREMENTAL QUERIES AND TIME TRAVEL)
-spark.sql("SELECT * FROM {}.TRX_TABLE.snapshots;".format(username)).show()
+spark.sql("SELECT * FROM {}.FIRST_BATCH_TABLE.snapshots;".format(username)).show()
 
 # STORE FIRST AND LAST SNAPSHOT ID'S FROM SNAPSHOTS TABLE
-snapshots_df = spark.sql("SELECT * FROM {}.TRX_TABLE.snapshots;".format(username))
+snapshots_df = spark.sql("SELECT * FROM {}.FIRST_BATCH_TABLE.snapshots;".format(username))
 
 last_snapshot = snapshots_df.select("snapshot_id").tail(1)[0][0]
 second_snapshot = snapshots_df.select("snapshot_id").collect()[1][0]
@@ -80,7 +80,7 @@ incReadDf = spark.read\
     .format("iceberg")\
     .option("start-snapshot-id", second_snapshot)\
     .option("end-snapshot-id", last_snapshot)\
-    .load("spark_catalog.{}.TRX_TABLE".format(username))
+    .load("spark_catalog.{}.FIRST_BATCH_TABLE".format(username))
 
 print("Incremental DF Schema:")
 incReadDf.printSchema()
@@ -93,7 +93,7 @@ incReadDf.show()
 #---------------------------------------------------
 
 ### LOAD CUSTOMER DATA REFINED
-custDf = spark.sql("SELECT * FROM spark_catalog.{}.CUST_TABLE_REFINED".format(username))
+custDf = spark.sql("SELECT * FROM spark_catalog.{}.COMPANY_TABLE_REFINED".format(username))
 
 print("Cust DF Schema: ")
 custDf.printSchema()
@@ -101,11 +101,11 @@ custDf.printSchema()
 finalReport = incReadDf.join(custDf, custDf.CREDIT_CARD_NUMBER == incReadDf.credit_card_number, 'inner')
 
 distanceFunc = F.udf(lambda arr: (((arr[2]-arr[0])**2)+((arr[3]-arr[1])**2)**(1/2)), FloatType())
-distanceDf = finalReport.withColumn("trx_dist_from_home", distanceFunc(F.array("latitude", "longitude",
-                                                                            "address_latitude", "address_longitude")))
+distanceDf = finalReport.withColumn("DIST_FROM_FACILITY", distanceFunc(F.array("latitude", "longitude",
+                                                                            "facility_latitude", "facility_longitude")))
 
 # SELECT CUSTOMERS WHERE TRANSACTION OCCURRED MORE THAN 100 MILES FROM HOME
-distanceDf = distanceDf.filter(distanceDf.trx_dist_from_home > 100)
+distanceDf = distanceDf.filter(distanceDf.DIST_FROM_FACILITY > 20)
 
 #---------------------------------------------------
 #               SAVE DATA TO NEW ICEBERG TABLE

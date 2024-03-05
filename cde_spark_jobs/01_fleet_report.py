@@ -45,7 +45,7 @@ from utils import *
 
 spark = SparkSession \
     .builder \
-    .appName("BANK TRANSACTIONS BATCH REPORT") \
+    .appName("IOT FLEET BATCH REPORT") \
     .getOrCreate()
 
 config = configparser.ConfigParser()
@@ -58,19 +58,19 @@ print("PySpark Runtime Arg: ", sys.argv[1])
 
 ### TRANSACTIONS FACT TABLE
 
-transactionsDf = spark.read.json("{0}/mkthol/trans/{1}/transactions".format(storageLocation, username))
-transactionsDf = transactionsDf.select(flatten_struct(transactionsDf.schema))
-transactionsDf.printSchema()
+firstBatchDf = spark.read.json("{0}/logistics/firstbatch/{1}/iotfleet".format(storageLocation, username))
+firstBatchDf = firstBatchDf.select(flatten_struct(firstBatchDf.schema))
+firstBatchDf.printSchema()
 
 ### RENAME MULTIPLE COLUMNS
-cols = [col for col in transactionsDf.columns if col.startswith("transaction")]
+cols = [col for col in firstBatchDf.columns if col.startswith("iot_geolocation")]
 new_cols = [col.split(".")[1] for col in cols]
-transactionsDf = renameMultipleColumns(transactionsDf, cols, new_cols)
+firstBatchDf = renameMultipleColumns(firstBatchDf, cols, new_cols)
 
 ### CAST TYPES
-cols = ["transaction_amount", "latitude", "longitude"]
-transactionsDf = castMultipleColumns(transactionsDf, cols)
-transactionsDf = transactionsDf.withColumn("event_ts", transactionsDf["event_ts"].cast("timestamp"))
+cols = ["latitude", "longitude"]
+firstBatchDf = castMultipleColumns(firstBatchDf, cols)
+firstBatchDf = firstBatchDf.withColumn("event_ts", firstBatchDf["event_ts"].cast("timestamp"))
 
 ### TRX DF SCHEMA AFTER CASTING AND RENAMING
 transactionsDf.printSchema()
@@ -79,23 +79,23 @@ transactionsDf.printSchema()
 spark.sql("DROP DATABASE IF EXISTS {} CASCADE".format(username))
 spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(username))
 spark.sql("SHOW DATABASES LIKE '{}'".format(username)).show()
-transactionsDf.write.mode("overwrite").saveAsTable('{}.TRX_TABLE'.format(username), format="parquet")
+firstBatchDf.write.mode("overwrite").saveAsTable('{}.FIRST_BATCH_TABLE'.format(username), format="parquet")
 
 ### PII DIMENSION TABLE
-piiDf = spark.read.options(header='True', delimiter=',').csv("{0}/mkthol/pii/{1}/pii".format(storageLocation, username))
+companyDf = spark.read.options(header='True', delimiter=',').csv("{0}/logistics/company/{1}/company_info".format(storageLocation, username))
 
 ### CAST LAT LON AS FLOAT
-piiDf = piiDf.withColumn("address_latitude",  piiDf["address_latitude"].cast('float'))
-piiDf = piiDf.withColumn("address_longitude",  piiDf["address_longitude"].cast('float'))
+companyDf = companyDf.withColumn("facility_latitude",  companyDf["facility_latitude"].cast('float'))
+companyDf = companyDf.withColumn("facility_longitude",  companyDf["facility_longitude"].cast('float'))
 
-### STORE CUSTOMER DATA AS TABLE
-piiDf.write.mode("overwrite").saveAsTable('{}.CUST_TABLE'.format(username), format="parquet")
+### STORE COMPANY DATA AS TABLE
+companyDf.write.mode("overwrite").saveAsTable('{}.COMPANY_TABLE'.format(username), format="parquet")
 
 ### JOIN TWO DATASETS AND COMPARE COORDINATES
-joinDf = spark.sql("""SELECT i.name, i.address_longitude, i.address_latitude, i.bank_country,
-          r.credit_card_provider, r.event_ts, r.transaction_amount, r.longitude, r.latitude
-          FROM {0}.CUST_TABLE i INNER JOIN {0}.TRX_TABLE r
-          ON i.credit_card_number == r.credit_card_number;""".format(username))
+joinDf = spark.sql("""SELECT iot.device_id, iot.event_type, iot.event_ts, iot.latitude, iot.longitude, iot.iot_signal_1,
+          iot.iot_signal_2, iot.iot_signal_3, iot.iot_signal_4, i.company_name, i.company_email, i.facility_latitude, i.facility_longitude
+          FROM company_info i INNER JOIN firstbatch iot
+          ON i.manufacturer == iot.manufacturer;""".format(username))
 
 print("JOINDF SCHEMA")
 joinDf.printSchema()
@@ -113,9 +113,9 @@ def euclidean_dist(x1: pd.Series, x2: pd.Series, y1: pd.Series, y2: pd.Series) -
 eu_dist = pandas_udf(euclidean_dist, returnType=FloatType())
 
 # Applying UDF on joinDf
-eucDistDf = joinDf.withColumn("DIST_FROM_HOME", eu_dist(F.col("address_longitude"), \
-                                      F.col("longitude"), F.col("address_latitude"), \
+eucDistDf = joinDf.withColumn("DIST_FROM_FACILITY", eu_dist(F.col("facility_longitude"), \
+                                      F.col("longitude"), F.col("facility_latitude"), \
                                        F.col("latitude")))
 
 # SELECT CUSTOMERS WHERE TRANSACTION OCCURRED MORE THAN 100 MILES FROM HOME
-eucDistDf.filter(eucDistDf.DIST_FROM_HOME > 100).show()
+eucDistDf.filter(eucDistDf.DIST_FROM_FACILITY > 20).show()

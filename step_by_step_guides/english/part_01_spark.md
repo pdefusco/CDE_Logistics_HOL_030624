@@ -127,46 +127,26 @@ companyDf.createOrReplaceTempView("company_info")
 ```
 
 ```
-### SELECT TOP 100 CUSTOMERS WITH MULTIPLE CREDIT CARDS SORTED BY NUMBER OF CREDIT CARDS FROM HIGHEST TO LOWEST
-spark.sql("SELECT name AS name, \
-          COUNT(credit_card_number) AS CC_COUNT FROM cust_info GROUP BY name ORDER BY CC_COUNT DESC \
-          LIMIT 100").show()
-```
-
-```
-### SELECT TOP 100 CREDIT CARDS WITH MULTIPLE NAMES SORTED FROM HIGHEST TO LOWEST
-spark.sql("SELECT COUNT(name) AS NM_COUNT, \
-          credit_card_number AS CC_NUM FROM cust_info GROUP BY CC_NUM ORDER BY NM_COUNT DESC \
-          LIMIT 100").show()
-```
-
-```
-# SELECT TOP 25 CUSTOMERS WITH MULTIPLE ADDRESSES SORTED FROM HIGHEST TO LOWEST
-spark.sql("SELECT name AS name, \
-          COUNT(address) AS ADD_COUNT FROM cust_info GROUP BY name ORDER BY ADD_COUNT DESC \
-          LIMIT 25").show()
-```
-
-```
 ### JOIN DATASETS AND COMPARE CREDIT CARD OWNER COORDINATES WITH TRANSACTION COORDINATES
-joinDf = spark.sql("""SELECT i.name, i.address_longitude, i.address_latitude, i.bank_country,
-          r.credit_card_provider, r.event_ts, r.transaction_amount, r.longitude, r.latitude
-          FROM cust_info i INNER JOIN trx r
-          ON i.credit_card_number == r.credit_card_number;""")
+joinDf = spark.sql("""SELECT iot.device_id, iot.event_type, iot.event_ts, iot.latitude, iot.longitude, iot.iot_signal_1,
+          iot.iot_signal_2, iot.iot_signal_3, iot.iot_signal_4, i.company_name, i.company_email, i.facility_latitude, i.facility_longitude
+          FROM company_info i INNER JOIN firstbatch iot
+          ON i.manufacturer == iot.manufacturer;""")
 joinDf.show()
 ```
 
 ```
-### CREATE PYSPARK UDF TO CALCULATE DISTANCE BETWEEN TRANSACTION AND HOME LOCATIONS
+### CREATE PYSPARK UDF TO CALCULATE DISTANCE BETWEEN FACILITY AND FLEET LOCATIONS
 distanceFunc = F.udf(lambda arr: (((arr[2]-arr[0])**2)+((arr[3]-arr[1])**2)**(1/2)), FloatType())
-distanceDf = joinDf.withColumn("trx_dist_from_home", distanceFunc(F.array("latitude", "longitude",
-                                                                            "address_latitude", "address_longitude")))
+distanceDf = joinDf.withColumn("device_dist_from_facility", distanceFunc(F.array("latitude", "longitude",
+                                                                            "facility_latitude", "facility_longitude")))
 ```
 
 ```
-### SELECT CUSTOMERS WHOSE TRANSACTION OCCURRED MORE THAN 100 MILES FROM HOME
-distanceDf.filter(distanceDf.trx_dist_from_home > 100).show()
+### SELECT FLEET MALFUNCTIONS OCCURRING LESS THAN 2 MILES FROM FACILITY
+distanceDf.filter((distanceDf.device_dist_from_facility < 2) & (distanceDf.event_type == "system malfunction")).show()
 ```
+
 
 ### Lab 2: Create CDE Resources and Run CDE Spark Job
 
@@ -182,7 +162,7 @@ In the next steps we will see these benefits in actions.
 
 ##### Create CDE Python Resource
 
-Navigate to the Resources tab and create a Python Resource. Make sure to select the Virtual Cluster assigned to you if you are creating a Resource from the CDE Home Page, and to name the Python Resource after your username e.g. "fraud-prevention-py-user100" if you are "user100".
+Navigate to the Resources tab and create a Python Resource. Make sure to select the Virtual Cluster assigned to you if you are creating a Resource from the CDE Home Page, and to name the Python Resource after your username e.g. "iot-fleet-py-user100" if you are "user100".
 
 Upload the "requirements.txt" file located in the "cde_spark_jobs" folder. This can take up to a few minutes.
 
@@ -202,9 +182,9 @@ From the Resources page create a CDE Files Resource. Upload all files contained 
 
 ![alt text](../../img/part1-cdefilesresource-2.png)
 
-Before moving on to the next step, please familiarize yourself with the code in the "01_fraud_report.py", "utils.py", and "parameters.conf" files.
+Before moving on to the next step, please familiarize yourself with the code in the "01_fleet_report.py", "utils.py", and "parameters.conf" files.
 
-Notice that "01_fraud_report.py" contains the same PySpark Application code you ran in the CDE Session, with the exception that the column casting and renaming steps have been refactored into Python functions in the "utils.py" script.
+Notice that "01_fleet_report.py" contains the same PySpark Application code you ran in the CDE Session, with the exception that the column casting and renaming steps have been refactored into Python functions in the "utils.py" script.
 
 Finally, notice the contents of "parameters.conf". Storing variables in a file in a Files Resource is one method used by CDE Data Engineers to dynamically parameterize scripts with external values.
 
@@ -220,7 +200,7 @@ Enter the following values without quotes into the corresponding fields. Make su
 
 * Job Type: Spark
 * Name: 01_fraud_report_userxxx
-* File: Select from Resource -> "01_fraud_report.py"
+* File: Select from Resource -> "01_fleet_report.py"
 * Arguments: userxxx
 * Configurations:
   - key: spark.sql.autoBroadcastJoinThreshold
