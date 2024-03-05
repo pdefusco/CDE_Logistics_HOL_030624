@@ -96,7 +96,7 @@ spark.sql("SELECT * FROM firstbatch LIMIT 10").show()
 
 ```
 ### CALCULATE AVERAGE IOT SIGNAL 4 VALUE AMOUNT BY HOUR
-spark.sql("SELECT MONTH(event_ts) AS month, \
+spark.sql("SELECT hours(event_ts) AS hour, \
           avg(iot_signal_4) FROM firstbatch GROUP BY hour ORDER BY hour").show()
 ```
 
