@@ -90,7 +90,8 @@ def createFirstBatchData(spark):
     try:
         print("CREATING IOT FLEET FIRST BATCH DF...\n")
         dg = IotDataGen(spark)
-        firstBatchDf = dg.firstBatchDataGen()
+        desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude = 40.51341, 43.67468, -94.9000, -92.5000
+        firstBatchDf = dg.firstBatchDataGen(desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude)
     except Exception as e:
         print("CREATING FIRST BATCH UNSUCCESSFUL")
         print('\n')
@@ -108,7 +109,8 @@ def createSecondBatchData(spark):
     try:
         print("CREATING IOT FLEET SECOND BATCH DF...\n")
         dg = IotDataGen(spark)
-        secondBatchDf = dg.secondBatchDataGen()
+        desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude = 40.51341, 43.67468, -94.9000, -92.5000
+        secondBatchDf = dg.secondBatchDataGen(desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude)
     except Exception as e:
         print("CREATING SECOND BATCH UNSUCCESSFUL")
         print('\n')
@@ -126,7 +128,8 @@ def createThirdBatchData(spark):
     try:
         print("CREATING IOT FLEET THIRD BATCH DF...\n")
         dg = IotDataGen(spark)
-        thirdBatchDf = dg.secondTransactionsBatchDataGen()
+        desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude = 40.51341, 43.67468, -94.9000, -92.5000
+        thirdBatchDf = dg.thirdBatchDataGen(desmoines_minLatitude, desmoines_maxLatitude, desmoines_minLongitude, desmoines_maxLongitude)
     except Exception as e:
         print("CREATING TRANSACTION DATA 2 UNSUCCESSFUL")
         print('\n')
@@ -146,7 +149,7 @@ def createCompanyData(spark):
         dg = IotDataGen(spark)
         companyDf = dg.companyDataGen()
     except Exception as e:
-        print("CREATING TRUCK COMPANY DATA UNSUCCESSFUL")
+        print("CREATING COMPANY DATA UNSUCCESSFUL")
         print('\n')
         print(f'caught {type(e)}: e')
         print(e)
@@ -162,7 +165,7 @@ def saveFirstBatchData(firstBatchDf, storageLocation, username):
     print("SAVING FIRST BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
-        bankTransactionsDf. \
+        firstBatchDf. \
             write. \
             format("json"). \
             mode("overwrite"). \
@@ -182,7 +185,7 @@ def saveSecondBatchData(secondBatchDf, storageLocation, username):
     print("SAVING SECOND BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
-        transactionsBatchDf. \
+        secondBatchDf. \
             write. \
             format("json"). \
             mode("overwrite"). \
@@ -202,7 +205,7 @@ def saveThirdBatchData(thirdBatchDf, storageLocation, username):
     print("SAVING THIRD BATCH OF IOT FLEET DATA TO JSON IN CLOUD STORAGE...\n")
 
     try:
-        secondTransactionsBatchDf. \
+        thirdBatchDf. \
             write. \
             format("json"). \
             mode("overwrite"). \

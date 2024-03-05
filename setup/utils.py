@@ -40,7 +40,6 @@
 import os
 import numpy as np
 import pandas as pd
-from pyspark.sql.functions import lit
 from datetime import datetime
 import dbldatagen as dg
 import dbldatagen.distributions as dist
@@ -152,16 +151,16 @@ class IotDataGen:
         return df
 
 
-    def companyDataGen(self, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 3):
+    def companyDataGen(self):
         """
         Method to create company information
         """
 
-        data = [{"manufacturer": "New World Corp", "company_name": "New World", "company_email": "info@newworld.net", "facility_latitude": lit(41.5868), "facility_longitude": lit(93.6250)},
-        {"manufacturer": "AI plus Inc.", "company_name": "AI plus", "company_email": "inquiries@aiplus.info", "facility_latitude": lit(42.5868), "facility_longitude": lit(92.6250)},
-        {"manufacturer": "Hot Data Ltd", "company_name": "Hot Data", "company_email": "requests@hotdata.com", "facility_latitude": lit(43.5868), "facility_longitude": lit(91.6250)}]
+        data = [{"manufacturer": "New World Corp", "company_name": "New World", "company_email": "info@newworld.net", "facility_latitude": 41.5868, "facility_longitude": 93.6250},
+        {"manufacturer": "AI plus Inc.", "company_name": "AI plus", "company_email": "inquiries@aiplus.info", "facility_latitude": 42.5868, "facility_longitude": 92.6250},
+        {"manufacturer": "Hot Data Ltd", "company_name": "Hot Data", "company_email": "requests@hotdata.com", "facility_latitude": 43.5868, "facility_longitude": 91.6250}]
 
         # creating a dataframe
-        df = spark.createDataFrame(data)
+        df = self.spark.createDataFrame(data)
 
         return df

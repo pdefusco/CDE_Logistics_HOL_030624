@@ -19,6 +19,10 @@ echo "Create CDE Docker Runtime dex-spark-runtime-"$cde_user
 cde resource create --name dex-spark-runtime-$cde_user --image pauldefusco/dex-spark-runtime-3.2.3-7.2.15.8:1.20.0-b15-great-expectations-data-quality --image-engine spark3 --type custom-runtime-image
 
 # CREATE FILE RESOURCE
+echo "Delete job log-hol-setup-"$cde_user
+cde job delete --name log-hol-setup-$cde_user
+echo "Delete Resource log-hol-setup-"$cde_user
+cde resource delete --name log-hol-setup-$cde_user
 echo "Create Resource log-hol-setup-"$cde_user
 cde resource create --name log-hol-setup-$cde_user
 echo "Upload utils.py to log-hol-setup-"$cde_user
