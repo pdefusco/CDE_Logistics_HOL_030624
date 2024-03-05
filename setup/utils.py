@@ -62,10 +62,10 @@ class IotDataGen:
 
     def firstBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 2, partitions_requested = 5, data_rows = 14400):
         """
-        Method to create credit card transactions in Spark Df
+        Method to create first batch of IOT Fleet data in Spark Df
         """
 
-        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+        manufacturers = ["New World Corp", "AI plus Inc.", "Hot Data Ltd"]
 
         iotDataSpec = (
             dg.DataGenerator(self.spark, name="device_data_set", rows=data_rows, partitions=partitions_requested)
@@ -82,7 +82,7 @@ class IotDataGen:
             .withColumn("iot_signal_2", "integer", minValue=1000, maxValue=1020, random=True)
             .withColumn("iot_signal_3", "integer", minValue=50, maxValue=55, random=True)
             .withColumn("iot_signal_4", "integer", minValue=100, maxValue=107, random=True)
-            .withColumn("transaction_geolocation", StructType([StructField('latitude',StringType()), StructField('longitude', StringType())]),
+            .withColumn("iot_geolocation", StructType([StructField('latitude',StringType()), StructField('longitude', StringType())]),
               expr="named_struct('latitude', latitude, 'longitude', longitude)",
               baseColumn=['latitude', 'longitude'])
         )
@@ -96,7 +96,7 @@ class IotDataGen:
 
     def secondBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 1000):
         """
-        Method to create credit card transactions in Spark Df
+        Method to create second batch of IOT Fleet data in Spark Df
         """
 
         manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
@@ -125,10 +125,10 @@ class IotDataGen:
 
     def thirdBatchDataGen(self, minLatitude, maxLatitude, minLongitude, maxLongitude, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 1000):
         """
-        Method to create credit card transactions in Spark Df
+        Method to create third batch of IOT Fleet data in Spark Df
         """
 
-        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+        manufacturers = ["New World Corp", "AI plus Inc.", "Hot Data Ltd"]
 
         iotDataSpec = (
             dg.DataGenerator(self.spark, name="device_data_set", rows=data_rows, partitions=partitions_requested)
@@ -151,71 +151,17 @@ class IotDataGen:
 
         return df
 
+
     def companyDataGen(self, shuffle_partitions_requested = 1, partitions_requested = 1, data_rows = 3):
+        """
+        Method to create company information
+        """
 
-        manufacturers = ["New World Corp", "AIAI Inc.", "Hot Data Ltd"]
+        data = [{"manufacturer": "New World Corp", "company_name": "New World", "company_email": "info@newworld.net", "facility_latitude": lit(41.5868), "facility_longitude": lit(93.6250)},
+        {"manufacturer": "AI plus Inc.", "company_name": "AI plus", "company_email": "inquiries@aiplus.info", "facility_latitude": lit(42.5868), "facility_longitude": lit(92.6250)},
+        {"manufacturer": "Hot Data Ltd", "company_name": "Hot Data", "company_email": "requests@hotdata.com", "facility_latitude": lit(43.5868), "facility_longitude": lit(91.6250)}]
 
-        # setup use of Faker
-        FakerTextUS = FakerTextFactory(locale=['en_US'], providers=[bank])
-
-        # partition parameters etc.
-        self.spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions_requested)
-
-        fakerDataspec = (DataGenerator(self.spark, rows=data_rows, partitions=partitions_requested)
-                    .withColumn("manufacturer", "string", values=manufacturers, random=False, randomSeed=4)
-                    .withColumn("company_name", text=FakerTextUS("company"), randomSeed=4)
-                    .withColumn("company_email", text=FakerTextUS("ascii_company_email"), randomSeed=4)
-                    )
-
-        df = fakerDataspec.build()
-        df = df.withColumn('facility_latitude', lit(41.5868))
-        df = df.withColumn('facility_longitude', lit(93.6250))
+        # creating a dataframe
+        df = spark.createDataFrame(data)
 
         return df
-
-
-    def createDatabase(self):
-        """
-        Method to create database before data generated is saved to new database and table
-        """
-
-        self.spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(self.dbname))
-
-        print("SHOW DATABASES LIKE '{}'".format(self.dbname))
-        self.spark.sql("SHOW DATABASES LIKE '{}'".format(self.dbname)).show()
-
-
-    def dropDatabase(self):
-        """
-        Method to drop database used by previous demo run
-        """
-
-        print("SHOW DATABASES PRE DROP")
-        self.spark.sql("SHOW DATABASES").show()
-        self.spark.sql("DROP DATABASE IF EXISTS {} CASCADE;".format(self.dbname))
-        print("\nSHOW DATABASES AFTER DROP")
-        self.spark.sql("SHOW DATABASES").show()
-
-
-    def createOrReplace(self, df):
-        """
-        Method to create or append data to the IOT DEVICES FLEET table
-        The table is used to simulate batches of new data
-        The table is meant to be updated periodically as part of a CML Job
-        """
-
-        try:
-            df.writeTo("{0}.IOT_FLEET_{1}".format(self.dbname, self.username))\
-              .using("iceberg").tableProperty("write.format.default", "parquet").append()
-
-        except:
-            df.writeTo("{0}.IOT_FLEET_{1}".format(self.dbname, self.username))\
-                .using("iceberg").tableProperty("write.format.default", "parquet").createOrReplace()
-
-
-    def validateTable(self):
-        """
-        Method to validate creation of table
-        """
-        print("SHOW TABLES FROM '{}'".format(self.dbname))
-        self.spark.sql("SHOW TABLES FROM {}".format(self.dbname)).show()
