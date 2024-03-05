@@ -102,7 +102,7 @@ spark.sql("SELECT hour(event_ts) AS hour, \
 
 ```
 ### CALCULATE COUNT OF DEVICE ID'S BY MANUFACTURER
-spark.sql("SELECT device_id, COUNT(*) AS COUNT FROM firstbatch \
+spark.sql("SELECT manufacturer, COUNT(device_id) AS COUNT FROM firstbatch \
             GROUP BY manufacturer ORDER BY COUNT DESC LIMIT 10").show()
 ```
 
