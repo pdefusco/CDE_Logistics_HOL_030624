@@ -93,12 +93,12 @@ incReadDf.show()
 #---------------------------------------------------
 
 ### LOAD CUSTOMER DATA REFINED
-custDf = spark.sql("SELECT * FROM spark_catalog.{}.COMPANY_TABLE_REFINED".format(username))
+coDf = spark.sql("SELECT * FROM spark_catalog.{}.COMPANY_TABLE_REFINED".format(username))
 
 print("Cust DF Schema: ")
-custDf.printSchema()
+coDf.printSchema()
 
-finalReport = incReadDf.join(custDf, custDf.CREDIT_CARD_NUMBER == incReadDf.credit_card_number, 'inner')
+finalReport = incReadDf.join(coDf, coDf.manufacturer == incReadDf.manufacturer, 'inner')
 
 distanceFunc = F.udf(lambda arr: (((arr[2]-arr[0])**2)+((arr[3]-arr[1])**2)**(1/2)), FloatType())
 distanceDf = finalReport.withColumn("DIST_FROM_FACILITY", distanceFunc(F.array("latitude", "longitude",
