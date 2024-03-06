@@ -56,7 +56,7 @@ print("Storage Location from Config File: ", storageLocation)
 username = sys.argv[1]
 print("PySpark Runtime Arg: ", sys.argv[1])
 
-### TRANSACTIONS FACT TABLE
+### FIRST BATCH FACT TABLE
 
 firstBatchDf = spark.read.json("{0}/logistics/firstbatch/{1}/iotfleet".format(storageLocation, username))
 firstBatchDf = firstBatchDf.select(flatten_struct(firstBatchDf.schema))
@@ -73,9 +73,9 @@ firstBatchDf = castMultipleColumns(firstBatchDf, cols)
 firstBatchDf = firstBatchDf.withColumn("event_ts", firstBatchDf["event_ts"].cast("timestamp"))
 
 ### TRX DF SCHEMA AFTER CASTING AND RENAMING
-transactionsDf.printSchema()
+firstBatchDf.printSchema()
 
-### STORE TRANSACTIONS AS TABLE
+### STORE FIRST BATCH AS TABLE
 spark.sql("DROP DATABASE IF EXISTS {} CASCADE".format(username))
 spark.sql("CREATE DATABASE IF NOT EXISTS {}".format(username))
 spark.sql("SHOW DATABASES LIKE '{}'".format(username)).show()
@@ -117,5 +117,5 @@ eucDistDf = joinDf.withColumn("DIST_FROM_FACILITY", eu_dist(F.col("facility_long
                                       F.col("longitude"), F.col("facility_latitude"), \
                                        F.col("latitude")))
 
-# SELECT CUSTOMERS WHERE TRANSACTION OCCURRED MORE THAN 100 MILES FROM HOME
+# SELECT CUSTOMERS WHERE FLEET UNIT IS LOCATED MORE THAN 20 MILES FROM HOME
 eucDistDf.filter(eucDistDf.DIST_FROM_FACILITY > 20).show()
