@@ -74,7 +74,7 @@ spark.sql("DROP TABLE IF EXISTS spark_catalog.{0}.COMPANY_TABLE_REFINED".format(
 
 spark.sql("""CREATE TABLE spark_catalog.{0}.COMPANY_TABLE_REFINED
                 USING iceberg
-                AS SELECT COMPANY_EMAIL, FACILITY_LATITUDE, FACILITY_LONGITUDE
+                AS SELECT MANUFACTURER, COMPANY_EMAIL, FACILITY_LATITUDE, FACILITY_LONGITUDE
                 FROM spark_catalog.{0}.COMPANY_TABLE""".format(username))
 
 #---------------------------------------------------
