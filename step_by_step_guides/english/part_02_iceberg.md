@@ -62,7 +62,7 @@ spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.FIRST_BATCH_TABLE".format(usern
 ```
 # LOAD SECOND TRANSACTION BATCH
 secondBatchDf = spark.read.json("{0}/logistics/secondbatch/{1}/iotfleet".format(storageLocation, username))
-secondBatchDf = trxBatchDf.withColumn("event_ts", secondBatchDf["event_ts"].cast('timestamp'))
+secondBatchDf = secondBatchDf.withColumn("event_ts", secondBatchDf["event_ts"].cast('timestamp'))
 secondBatchDf.printSchema()
 secondBatchDf.createOrReplaceTempView("SECOND_BATCH_TEMP_VIEW".format(username))
 ```
