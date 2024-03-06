@@ -60,7 +60,7 @@ print("PRE-INSERT TIMESTAMP: ", timestamp)
 spark.sql("SELECT COUNT(*) FROM spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).show()
 ```
 ```
-# LOAD SECOND TRANSACTION BATCH
+# LOAD SECOND BATCH
 secondBatchDf = spark.read.json("{0}/logistics/secondbatch/{1}/iotfleet".format(storageLocation, username))
 secondBatchDf = secondBatchDf.withColumn("event_ts", secondBatchDf["event_ts"].cast('timestamp'))
 secondBatchDf.printSchema()
@@ -68,16 +68,8 @@ secondBatchDf.createOrReplaceTempView("SECOND_BATCH_TEMP_VIEW".format(username))
 ```
 
 ```
-ICEBERG_MERGE_INTO_SYNTAX = """MERGE INTO spark_catalog.{}.FIRST_BATCH_TABLE f USING (SELECT * FROM SECOND_BATCH_TEMP_VIEW) s
-   ON f.device_id = s.device_id AND f.event_ts = s.event_ts WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *""".format(username)
-
-spark.sql(ICEBERG_MERGE_INTO_SYNTAX)
-```
-
-```
-### ALTERNATIVE SYNTAX VIA ICEBERG DF API IF MERGE INTO IS JUST APPEND
-### DO NOT RUN - YOU WILL LEARN MORE IN PART 3
-### secondBatchDf.writeTo("spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).append()
+# APPEND SECOND BATCH
+secondBatchDf.writeTo("spark_catalog.{}.FIRST_BATCH_TABLE".format(username)).append()
 ```
 
 ```
@@ -91,7 +83,7 @@ spark.sql("SELECT * FROM spark_catalog.{}.FIRST_BATCH_TABLE.history".format(user
 ```
 
 ```
-# QUERY ICEBERG METADATA HISTORY TABLE
+# QUERY ICEBERG METADATA SNAPSHOTS TABLE
 spark.sql("SELECT * FROM spark_catalog.{}.FIRST_BATCH_TABLE.snapshots".format(username)).show(20, False)
 ```
 
