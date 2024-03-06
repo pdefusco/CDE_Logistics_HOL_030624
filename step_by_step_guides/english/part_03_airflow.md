@@ -34,17 +34,17 @@ In this section you will create four CDE Spark Jobs via the CDE Jobs UI. It is i
   - Files & Resources: choose your CDE Files resource from the dropdown (this should have already been prefilled for you)
   - Leave all other settings to default values and create the job.
 
-2. Customer Data Load:
-  - Name: name this after your user e.g. if you are user "user010" call it "03_cust_data_user010"
-  - Application File: "03_cust_data.py" located in your CDE Files resource.
+2. Company Data Load:
+  - Name: name this after your user e.g. if you are user "user010" call it "03_co_data_user010"
+  - Application File: "03_co_data.py" located in your CDE Files resource.
   - Arguments: enter your username here, without quotes (just text) e.g. if you are user "user010" enter "user010" without quotes
   - Python Environment: choose your CDE Python resource from the dropdown
   - Files & Resources: choose your CDE Files resource from the dropdown (this should have already been prefilled for you)
   - Leave all other settings to default values and create the job.
 
-3. Merge Transactions:
-  - Name: name this after your user e.g. if you are user "user010" call it "04_merge_trx_user010"
-  - Application File: "04_merge_trx.py" located in your CDE Files resource.
+3. Merge Batches:
+  - Name: name this after your user e.g. if you are user "user010" call it "04_merge_batch_user010"
+  - Application File: "04_merge_batches.py" located in your CDE Files resource.
   - Arguments: enter your username here, without quotes (just text) e.g. if you are user "user010" enter "user010" without quotes
   - Files & Resources: choose your CDE Files resource from the dropdown (this should have already been prefilled for you)
   - Leave all other settings to default values and create the job.  
