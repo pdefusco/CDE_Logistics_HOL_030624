@@ -199,7 +199,7 @@ Navigate to the CDE Jobs tab and click on "Create Job". The long form loaded to 
 Enter the following values without quotes into the corresponding fields. Make sure to update the username with your assigned user wherever needed:
 
 * Job Type: Spark
-* Name: 01_fraud_report_userxxx
+* Name: 01_fleet_report_userxxx
 * File: Select from Resource -> "01_fleet_report.py"
 * Arguments: userxxx
 * Configurations:
