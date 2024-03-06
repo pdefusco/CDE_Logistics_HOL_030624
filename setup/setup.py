@@ -265,7 +265,7 @@ def main():
 
         print("PROCESSING USER {}...\n".format(username))
 
-        dropDatabase(spark)
+        dropDatabase(spark, username)
 
         firstBatchDf = createFirstBatchData(spark)
         saveFirstBatchData(firstBatchDf, storageLocation, username)
