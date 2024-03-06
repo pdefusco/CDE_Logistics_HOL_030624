@@ -94,7 +94,7 @@ companyDf.write.mode("overwrite").saveAsTable('{}.COMPANY_TABLE'.format(username
 ### JOIN TWO DATASETS AND COMPARE COORDINATES
 joinDf = spark.sql("""SELECT iot.device_id, iot.event_type, iot.event_ts, iot.latitude, iot.longitude, iot.iot_signal_1,
           iot.iot_signal_2, iot.iot_signal_3, iot.iot_signal_4, i.company_name, i.company_email, i.facility_latitude, i.facility_longitude
-          FROM company_info i INNER JOIN firstbatch iot
+          FROM {0}.company_table i INNER JOIN {0}.first_batch_table iot
           ON i.manufacturer == iot.manufacturer;""".format(username))
 
 print("JOINDF SCHEMA")
