@@ -68,7 +68,7 @@ thirdBatchDf = spark.read.json("{0}/logistics/thirdbatch/{1}/iotfleet".format(st
 
 # validate geospatial coordinate data to exist:
 
-geThirdBatchDf = SparkDFDataset(trxBatchDf)
+geThirdBatchDf = SparkDFDataset(thirdBatchDf)
 
 MANDATORY_COLUMNS = ["latitude", "longitude"]
 

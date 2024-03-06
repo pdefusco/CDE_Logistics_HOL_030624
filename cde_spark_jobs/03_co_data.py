@@ -63,7 +63,7 @@ print("PySpark Runtime Arg: ", sys.argv[1])
 #               MIGRATE COMPANY DATA TO ICEBERG
 #---------------------------------------------------
 
-spark.sql("ALTER TABLE {}.CUST_TABLE UNSET TBLPROPERTIES ('TRANSLATED_TO_EXTERNAL')".format(username))
+spark.sql("ALTER TABLE {}.COMPANY_TABLE UNSET TBLPROPERTIES ('TRANSLATED_TO_EXTERNAL')".format(username))
 spark.sql("CALL spark_catalog.system.migrate('{}.COMPANY_TABLE')".format(username))
 
 #---------------------------------------------------
