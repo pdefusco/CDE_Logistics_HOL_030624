@@ -92,13 +92,13 @@ incReadDf.show()
 #               JOIN INCREMENTAL READ WITH CUST INFO
 #---------------------------------------------------
 
-### LOAD CUSTOMER DATA REFINED
+### LOAD COMPANY DATA REFINED
 coDf = spark.sql("SELECT * FROM spark_catalog.{}.COMPANY_TABLE_REFINED".format(username))
 
-print("Cust DF Schema: ")
+print("Co DF Schema: ")
 coDf.printSchema()
 
-finalReport = incReadDf.join(coDf, coDf.manufacturer == incReadDf.manufacturer, 'inner')
+finalReport = incReadDf.join(coDf, coDf.MANUFACTURER == incReadDf.manufacturer, 'inner')
 
 distanceFunc = F.udf(lambda arr: (((arr[2]-arr[0])**2)+((arr[3]-arr[1])**2)**(1/2)), FloatType())
 distanceDf = finalReport.withColumn("DIST_FROM_FACILITY", distanceFunc(F.array("latitude", "longitude",
