@@ -46,8 +46,8 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models.param import Param
 
-username = "user092" # Enter your username here
-dag_name = "BankFraud-Orch-"+username
+username = "user0002" # Enter your username here
+dag_name = "IotFleet-Orch-"+username
 
 print("Using DAG Name: {}".format(dag_name))
 
@@ -81,17 +81,17 @@ data_validation = CDEJobRunOperator(
         trigger_rule='all_success',
         )
 
-customer_data = CDEJobRunOperator(
-        task_id='customer-data-load',
+company_data = CDEJobRunOperator(
+        task_id='company-data-load',
         dag=airflow_dag,
-        job_name='03_cust_data_'+username, #Must match name of CDE Spark Job in the CDE Jobs UI
+        job_name='03_co_data_'+username, #Must match name of CDE Spark Job in the CDE Jobs UI
         trigger_rule='all_success',
         )
 
-merge_trx = CDEJobRunOperator(
-        task_id='merge-trx',
+merge_batches = CDEJobRunOperator(
+        task_id='merge-batches',
         dag=airflow_dag,
-        job_name='04_merge_trx_'+username, #Must match name of CDE Spark Job in the CDE Jobs UI
+        job_name='04_merge_batch_'+username, #Must match name of CDE Spark Job in the CDE Jobs UI
         trigger_rule='all_success',
         )
 
@@ -107,4 +107,4 @@ end = DummyOperator(
         dag=airflow_dag
 )
 
-start >> [data_validation, customer_data] >> merge_trx >> inc_report >> end
+start >> [data_validation, company_data] >> merge_batches >> inc_report >> end
