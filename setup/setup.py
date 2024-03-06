@@ -237,6 +237,18 @@ def saveCompanyData(companyDf, storageLocation, username):
         print(e)
 
 
+def dropDatabase(spark, username):
+    """
+    Method to drop database used by previous demo run
+    """
+
+    print("SHOW DATABASES PRE DROP")
+    spark.sql("SHOW DATABASES").show()
+    spark.sql("DROP DATABASE IF EXISTS {} CASCADE;".format(username))
+    print("\nSHOW DATABASES AFTER DROP")
+    spark.sql("SHOW DATABASES").show()
+
+
 def main():
 
     maxParticipants, storageLocation = parseProperties()
@@ -252,6 +264,8 @@ def main():
             username = "user" + str(i+1)
 
         print("PROCESSING USER {}...\n".format(username))
+
+        dropDatabase(spark)
 
         firstBatchDf = createFirstBatchData(spark)
         saveFirstBatchData(firstBatchDf, storageLocation, username)
